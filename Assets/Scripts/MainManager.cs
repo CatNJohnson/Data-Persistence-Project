@@ -3,14 +3,20 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System.IO;
+using UnityEngine.EventSystems;
 
 public class MainManager : MonoBehaviour
+    //attached to MainManager Main scene - gameobject
 {
+    public static MainManager Instance;
+
     public Brick BrickPrefab;
     public int LineCount = 6;
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text highScoreText;
     public GameObject GameOverText;
     
     private bool m_Started = false;
@@ -18,10 +24,32 @@ public class MainManager : MonoBehaviour
     
     private bool m_GameOver = false;
 
-    
+    /*private void Awake()
+    {
+        if (Instance != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+        LoadName();
+    }*/
+
+
     // Start is called before the first frame update
     void Start()
     {
+        DataHandler.Instance.LoadRecord();
+        highScoreText.text = $"High Score : {DataHandler.Instance.highScoreName} : {DataHandler.Instance.highScore}";
+        ScoreText.text = $"Score : {DataHandler.Instance.playerName} : {m_Points}";
+        SetBricks();
+    }
+
+    public void SetBricks()
+    { 
+
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
         
@@ -65,12 +93,34 @@ public class MainManager : MonoBehaviour
     void AddPoint(int point)
     {
         m_Points += point;
-        ScoreText.text = $"Score : {m_Points}";
+        ScoreText.text = $"Score : {DataHandler.Instance.playerName} : {m_Points}";
     }
 
     public void GameOver()
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
+        if (DataHandler.Instance.highScore < m_Points)
+        {
+            DataHandler.Instance.highScore = m_Points;
+            DataHandler.Instance.highScoreName = DataHandler.Instance.playerName;
+            DataHandler.Instance.SaveRecord();
+            SetRecord();
+        }
     }
+        public void SetRecord()
+        {
+        highScoreText.text = $"High Score : {DataHandler.Instance.highScoreName} : {DataHandler.Instance.highScore}";
+    }
+
+    private void FixedUpdate()
+    {
+        if (Input.GetKeyDown(KeyCode.C))
+        {
+            DataHandler.Instance.highScoreName = "";
+            DataHandler.Instance.highScore = 0;
+            DataHandler.Instance.SaveRecord();
+        }
+    }
+
 }
